@@ -1,171 +1,336 @@
 <?php
-include_once '../conexion/conexion.php';
 
+include_once('../conexion/conexion.php');
+
+// Mostrar errores para poder depurar
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+
+// Crear conexión
 $objeto = new Conexion();
 $conexion = $objeto->conectar();
 
+$swalMessage = ''; // ← Aquí almacenamos el mensaje JS a mostrar
+
+// Consulta todos los préstamos
 $consulta = "SELECT * FROM prestamos";
-$resultado = $conexion->prepare($consulta);
-$resultado->execute();
-$loans = $resultado->fetchAll(PDO::FETCH_ASSOC);
+$resultado = $conexion->query($consulta);
+
+$loans = [];
+if ($resultado && $resultado->num_rows > 0) {
+    while ($row = $resultado->fetch_assoc()) {
+        $loans[] = $row;
+    }
+}
+
+// Update loans
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    if (
+        isset($_POST['fecha']) &&
+        isset($_POST['valor']) &&
+        isset($_POST['responsable']) &&
+        isset($_POST['status']) &&
+        isset($_POST['abono_pago']) &&
+        isset($_POST['motivo']) &&
+        isset($_POST['id_prestamos']) // importante
+    ) {
+        $fecha = $_POST['fecha'];
+        $valor = $_POST['valor'];
+        $responsable = $_POST['responsable'];
+        $status = $_POST['status'];
+        $abono_pago = $_POST['abono_pago'];
+        $motivo = $_POST['motivo'];
+        $id_prestamos = $_POST['id_prestamos'];
+
+        // Asegúrate de validar/sanitizar aquí si es necesario
+
+        $stmt = $conexion->prepare("UPDATE prestamos SET fecha=?, valor=?, responsable=?, status=?, abono_pago=?, motivo=? WHERE id_prestamos=?");
+        $stmt->bind_param("sissisi", $fecha, $valor, $responsable, $status, $abono_pago, $motivo, $id_prestamos);
+
+        if ($stmt->execute()) {
+            $swalMessage = "
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Éxito',
+                        text: 'Datos actualizados correctamente',
+                        icon: 'success',
+                        confirmButtonText: 'Aceptar'
+                    }).then(() => {
+                         window.location.href = 'table.php'; // redirige después
+
+                    });
+                });
+            </script>";
+        } else {
+            $swalMessage = "
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'No se pudo actualizar los datos',
+                        icon: 'error',
+                        confirmButtonText: 'Aceptar'
+                    });
+                });
+            </script>";
+        }
+
+        $stmt->close();
+        echo $swalMessage;
+    } else {
+        // Manejar el caso en que faltan datos
+        echo "<script>alert('Faltan datos en el formulario.');</script>";
+    }
+}
+
+
+// Delete loans
+
+if (isset($_GET['delete'])) {
+    $idToDelete = intval($_GET['delete']);
+
+    $stmt = $conexion->prepare("DELETE FROM prestamos WHERE id_prestamos = ?");
+    $stmt->bind_param("i", $idToDelete);
+
+    if ($stmt->execute()) {
+        echo "
+        <script>
+            Swal.fire({
+                title: 'Eliminado',
+                text: 'El préstamo ha sido eliminado correctamente.',
+                icon: 'success',
+                confirmButtonText: 'Aceptar'
+            }).then(() => {
+                 window.location.href = 'table.php'; // redirige después
+            });
+        </script>
+        ";
+    } else {
+        echo "
+        <script>
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudo eliminar el préstamo.',
+                icon: 'error',
+                confirmButtonText: 'Aceptar'
+            });
+        </script>
+        ";
+    }
+
+    $stmt->close();
+}
+
+
 ?>
-
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Listado de Préstamos</title>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+    <!-- Tailwind y Flowbite -->
     <link href="./src/output.css" rel="stylesheet">
-    <link href="./src/style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
-
-    <title>Document</title>
 </head>
 
-<body class="bg-[#f3f3f3]">
+<body class="bg-gray-100">
 
-    <div class="flex justify-end items-center m-4">
-        <button onclick="location.href='../modals/loans/create.html'" class="p-2 cursor-pointer hover:bg-blue-400 font-semibold text-md w-auto rounded-lg bg-blue-200 shadow-lg shadow-blue-500/50">Agregar Datos</button>
-    </div>
-
-
-    <div class="relative overflow-x-auto rounded-2xl shadow-2xl shadow-blue-500/50 m-4">
-
-        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+    <div class="relative overflow-x-auto rounded-2xl shadow-2xl shadow-blue-500/50 m-4 bg-white">
+        <table class="w-full text-sm text-left text-gray-700">
+            <thead class="text-xs uppercase bg-gray-50">
                 <tr>
-
-                    <th scope="col" class="px-6 py-3">
-                        Fecha
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Valor
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Responsable
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Status
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Abono / Pago
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Motivo Prestamo
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Action
-                    </th>
+                    <th class="px-6 py-3">Fecha</th>
+                    <th class="px-6 py-3">Valor</th>
+                    <th class="px-6 py-3">Responsable</th>
+                    <th class="px-6 py-3">Status</th>
+                    <th class="px-6 py-3">Abono / Pago</th>
+                    <th class="px-6 py-3">Motivo Préstamo</th>
+                    <th class="px-6 py-3">Acción</th>
                 </tr>
             </thead>
             <tbody>
+                <?php if (!empty($loans)): ?>
+                    <?php foreach ($loans as $loan): ?>
+                        <tr class="bg-white border-b hover:bg-gray-50">
 
-                <?php foreach ($loans as $loan) { ?>
+                            <td class="px-6 py-4 font-semibold"><?php echo htmlspecialchars($loan['fecha']); ?></td>
+                            <td class="px-6 py-4"><?php echo number_format($loan['valor'], 0, ',', '.'); ?></td>
+                            <td class="px-6 py-4"><?php echo htmlspecialchars($loan['responsable']); ?></td>
+                            <td class="px-6 py-4 flex items-center">
+                                <div class="h-2.5 w-2.5 rounded-full <?php echo $loan['status'] == 1 ? 'bg-green-500' : 'bg-red-500'; ?> mr-2"></div>
+                                <?php echo $loan['status'] == 1 ? 'Pagado' : 'Debe'; ?>
+                            </td>
+                            <td class="px-6 py-4"><?php echo htmlspecialchars($loan['abono_pago']); ?></td>
+                            <td class="px-6 py-4"><?php echo htmlspecialchars($loan['motivo']); ?></td>
+                            <td class="px-6 py-4 flex space-x-0.5">
+                                <a href="#" class="flex justify-start items-start"
+                                    data-modal-target="editUserModal"
+                                    data-modal-show="editUserModal"
+                                    class="text-blue-600 hover:underline"
+                                    data-id="<?php echo isset($loan['id']) ? $loan['id'] : ''; ?>"
+                                    data-fecha="<?php echo isset($loan['fecha']) ? $loan['fecha'] : ''; ?>"
+                                    data-valor="<?php echo isset($loan['valor']) ? $loan['valor'] : ''; ?>"
+                                    data-responsable="<?php echo isset($loan['responsable']) ? htmlspecialchars($loan['responsable'], ENT_QUOTES, 'UTF-8') : ''; ?>"
+                                    data-status="<?php echo isset($loan['status']) ? $loan['status'] : ''; ?>"
+                                    data-abono_pago="<?php echo isset($loan['abono_pago']) ? $loan['abono_pago'] : ''; ?>"
+                                    data-motivo="<?php echo isset($loan['motivo']) ? htmlspecialchars($loan['motivo'], ENT_QUOTES, 'UTF-8') : ''; ?>">
+                                    <svg class="w-6 h-6 text-green-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round" stroke-width="2" d="M7 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h1m4-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm7.441 1.559a1.907 1.907 0 0 1 0 2.698l-6.069 6.069L10 19l.674-3.372 6.07-6.07a1.907 1.907 0 0 1 2.697 0Z" />
+                                    </svg>
 
-                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
-
-                        <th scope="row" class="items-center px-3 py-4 text-gray-900 whitespace-nowrap dark:text-white">
-                            <div class="ps-3">
-                                <div class="text-base font-semibold"> <?php echo $loan['fecha']; ?></div>
-                            </div>
-                        </th>
-                        <td class="px-6 py-4">
-                            <?php echo number_format($loan['valor'], 0, ',', '.'); ?>
-
-
-                        </td>
-                        <td class="px-6 py-4">
-                            <?php echo $loan['responsable']; ?>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center">
-                                <div class="h-2.5 w-2.5 rounded-full <?php echo $loan['status'] == 1 ? 'bg-green-500' : 'bg-red-500'; ?> me-2"></div> <?php echo $loan['status'] == 1 ? 'Pagado' : 'Debe'; ?>
-
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <?php echo $loan['abono_pago']; ?>
-                        </td>
-                        <td class="px-6 py-4">
-                            <?php echo $loan['motivo']; ?>
-                        </td>
-                        <td class="px-6 py-4">
-                            <!-- Modal toggle -->
-                            <a href="#" type="button" data-modal-target="editUserModal" data-modal-show="editUserModal" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Editar</a>
-                        </td>
+                                </a>
+                                <a href="#"
+                                    class="text-red-600 hover:underline ml-2 btn-delete"
+                                    data-id="<?php echo $loan['id_prestamos']; ?>">
+                                    <svg class="w-6 h-6 text-red-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z" />
+                                    </svg>
+                                </a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">No hay préstamos registrados.</td>
                     </tr>
-                <?php } ?>
-
+                <?php endif; ?>
             </tbody>
         </table>
-        <!-- Edit user modal -->
-        <div id="editUserModal" tabindex="-1" aria-hidden="true" class="fixed top-0 left-0 right-0 z-50 items-center justify-center hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
-            <div class="relative w-full max-w-2xl max-h-full">
-                <!-- Modal content -->
-                <form class="relative bg-white rounded-lg shadow-sm dark:bg-gray-700">
-                    <!-- Modal header -->
-                    <div class="flex items-start justify-between p-4 border-b rounded-t dark:border-gray-600 border-gray-200">
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-                            Edit user
-                        </h3>
-                        <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="editUserModal">
-                            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-                            </svg>
-                            <span class="sr-only">Close modal</span>
-                        </button>
+    </div>
+
+    <!-- Modal Visual (sin funcionalidad PHP) -->
+    <div id="editUserModal" tabindex="-1" aria-hidden="true" class="fixed inset-0 z-50 hidden items-center justify-center p-4 overflow-auto">
+        <div class="relative max-h-full">
+            <form method="POST" action="<?= $_SERVER['PHP_SELF'] ?>" class="w-full p-6 bg-white rounded-lg shadow-xl shadow-red-500/50">
+                <input type="hidden" name="id_prestamos" id="id_prestamos" value="<?= $loan['id_prestamos'] ?? '' ?>">
+
+
+
+                <!-- Fecha -->
+                <div class="relative z-0 w-full mb-5 group">
+                    <input type="date" name="fecha" id="fecha" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required />
+                    <label for="fecha" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Fecha</label>
+                </div>
+
+                <!-- Valor -->
+                <div class="relative z-0 w-full mb-5 group">
+                    <input type="number" name="valor" id="valor" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required />
+                    <label for="valor" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Valor</label>
+                </div>
+
+                <!-- Responsable -->
+                <div class="relative z-0 w-full mb-5 group">
+                    <input type="text" name="responsable" id="responsable" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required />
+                    <label for="responsable" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Responsable</label>
+                </div>
+
+                <div class="grid md:grid-cols-2 md:gap-6">
+                    <!-- Status -->
+                    <div class="relative z-0 w-full mb-5 group">
+                        <select name="status" id="status" class="block appearance-none w-full bg-transparent text-sm text-gray-900 border-0 border-b-2 border-gray-300 px-0 py-2.5 peer focus:outline-none focus:ring-0 focus:border-blue-600" required>
+                            <option value="" disabled selected hidden></option>
+                            <option value="0">Debe</option>
+                            <option value="1">Pagado</option>
+                        </select>
+                        <label for="status" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Estado de pago</label>
                     </div>
-                    <!-- Modal body -->
-                    <div class="p-6 space-y-6">
-                        <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-6 sm:col-span-3">
-                                <label for="first-name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">First Name</label>
-                                <input type="text" name="first-name" id="first-name" class="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Bonnie" required="">
-                            </div>
-                            <div class="col-span-6 sm:col-span-3">
-                                <label for="last-name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Last Name</label>
-                                <input type="text" name="last-name" id="last-name" class="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Green" required="">
-                            </div>
-                            <div class="col-span-6 sm:col-span-3">
-                                <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
-                                <input type="email" name="email" id="email" class="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="example@company.com" required="">
-                            </div>
-                            <div class="col-span-6 sm:col-span-3">
-                                <label for="phone-number" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Phone Number</label>
-                                <input type="number" name="phone-number" id="phone-number" class="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="e.g. +(12)3456 789" required="">
-                            </div>
-                            <div class="col-span-6 sm:col-span-3">
-                                <label for="department" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Department</label>
-                                <input type="text" name="department" id="department" class="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Development" required="">
-                            </div>
-                            <div class="col-span-6 sm:col-span-3">
-                                <label for="company" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Company</label>
-                                <input type="number" name="company" id="company" class="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="123456" required="">
-                            </div>
-                            <div class="col-span-6 sm:col-span-3">
-                                <label for="current-password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Current Password</label>
-                                <input type="password" name="current-password" id="current-password" class="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="••••••••" required="">
-                            </div>
-                            <div class="col-span-6 sm:col-span-3">
-                                <label for="new-password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">New Password</label>
-                                <input type="password" name="new-password" id="new-password" class="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="••••••••" required="">
-                            </div>
-                        </div>
+
+                    <!-- Abono -->
+                    <div class="relative z-0 w-full mb-5 group">
+                        <input type="number" name="abono_pago" id="abono_pago" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required />
+                        <label for="abono_pago" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Abono / Pagado</label>
                     </div>
-                    <!-- Modal footer -->
-                    <div class="flex items-center p-6 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b dark:border-gray-600">
-                        <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Save all</button>
-                    </div>
-                </form>
-            </div>
+                </div>
+
+                <!-- Motivo -->
+                <div class="relative z-0 w-full mb-5 group">
+                    <textarea name="motivo" id="motivo" rows="4" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none resize-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required></textarea>
+                    <label for="motivo" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Motivo</label>
+                </div>
+
+                <!-- Botón -->
+                <button type="submit" class="cursor-pointer w-full bg-blue-700 hover:bg-blue-800 text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center">Actualizar Datos</button>
+            </form>
         </div>
     </div>
 
+    <?php
+    // Muestra el mensaje si existe
+    if (!empty($swalMessage)) {
+        echo $swalMessage;
+    }
+    ?>
 
-    <script src="../path/to/flowbite/dist/flowbite.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Escuchamos clics en los botones "Editar"
+            const editButtons = document.querySelectorAll('[data-modal-target="editUserModal"]');
+
+            editButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Obtenemos los valores de los atributos data-*
+                    const fecha = button.getAttribute('data-fecha');
+                    const valor = button.getAttribute('data-valor');
+                    const responsable = button.getAttribute('data-responsable');
+                    const status = button.getAttribute('data-status');
+                    const abono = button.getAttribute('data-abono_pago');
+                    const motivo = button.getAttribute('data-motivo');
+
+                    // Rellenamos los inputs del modal
+                    document.getElementById('fecha').value = fecha;
+                    document.getElementById('valor').value = valor;
+                    document.getElementById('responsable').value = responsable;
+                    document.getElementById('status').value = status;
+                    document.getElementById('abono_pago').value = abono;
+                    document.getElementById('motivo').value = motivo;
+                });
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const deleteButtons = document.querySelectorAll('.btn-delete');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault(); // Previene navegación
+
+                    const id = this.getAttribute('data-id');
+
+                    Swal.fire({
+                        title: '¿Estás seguro?',
+                        text: 'Esta acción no se puede deshacer.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Sí, eliminar',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Redirige al mismo archivo con parámetro de eliminación
+                            window.location.href = 'table.php?delete=' + id;
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+
+
 </body>
 
 </html>
