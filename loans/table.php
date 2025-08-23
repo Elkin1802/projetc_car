@@ -153,7 +153,7 @@ if (isset($_GET['delete'])) {
                                 <div class="h-2.5 w-2.5 rounded-full <?php echo $loan['status'] == 1 ? 'bg-green-500' : 'bg-red-500'; ?> mr-2"></div>
                                 <?php echo $loan['status'] == 1 ? 'Pagado' : 'Debe'; ?>
                             </td>
-                            <td class="px-6 py-4"><?php echo htmlspecialchars($loan['abono_pago']); ?></td>
+                            <td class="px-6 py-4"><?php echo number_format($loan['abono_pago'], 0, ',', '.') ?></td>
                             <td class="px-6 py-4"><?php echo htmlspecialchars($loan['motivo']); ?></td>
                             <td class="px-6 py-4 flex space-x-0.5">
                                 <a href="#" class="flex justify-start items-start"
@@ -189,6 +189,8 @@ if (isset($_GET['delete'])) {
                 <?php endif; ?>
             </tbody>
         </table>
+
+        <div id="pagination" class="flex justify-center mt-4 mb-4"></div>
     </div>
 
     <!-- Modal Visual (sin funcionalidad PHP) -->
@@ -254,6 +256,12 @@ if (isset($_GET['delete'])) {
     }
     ?>
 
+    <!-- Pagination -->
+
+    <script src="../js/pagination.js"></script>
+
+    <!-- Modal Edit -->
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Escuchamos clics en los botones "Editar"
@@ -280,6 +288,8 @@ if (isset($_GET['delete'])) {
             });
         });
     </script>
+
+    <!-- Delete alert and button -->
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -332,9 +342,6 @@ if (isset($_GET['delete'])) {
             });
         });
     </script>
-
-
-
 
 </body>
 
