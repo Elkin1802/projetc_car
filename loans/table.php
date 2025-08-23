@@ -96,33 +96,15 @@ if (isset($_GET['delete'])) {
     $stmt->bind_param("i", $idToDelete);
 
     if ($stmt->execute()) {
-        echo "
-        <script>
-            Swal.fire({
-                title: 'Eliminado',
-                text: 'El préstamo ha sido eliminado correctamente.',
-                icon: 'success',
-                confirmButtonText: 'Aceptar'
-            }).then(() => {
-                 window.location.href = 'table.php'; // redirige después
-            });
-        </script>
-        ";
+        echo json_encode(["status" => "ok"]);
     } else {
-        echo "
-        <script>
-            Swal.fire({
-                title: 'Error',
-                text: 'No se pudo eliminar el préstamo.',
-                icon: 'error',
-                confirmButtonText: 'Aceptar'
-            });
-        </script>
-        ";
+        echo json_encode(["status" => "error"]);
     }
 
     $stmt->close();
+    exit();
 }
+
 
 
 ?>
@@ -305,7 +287,7 @@ if (isset($_GET['delete'])) {
 
             deleteButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
-                    e.preventDefault(); // Previene navegación
+                    e.preventDefault();
 
                     const id = this.getAttribute('data-id');
 
@@ -320,14 +302,37 @@ if (isset($_GET['delete'])) {
                         cancelButtonText: 'Cancelar'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            // Redirige al mismo archivo con parámetro de eliminación
-                            window.location.href = 'table.php?delete=' + id;
+                            fetch('table.php?delete=' + id)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.status === "ok") {
+                                        Swal.fire({
+                                            title: 'Eliminado',
+                                            text: 'El préstamo ha sido eliminado correctamente.',
+                                            icon: 'success',
+                                            confirmButtonText: 'Aceptar'
+                                        }).then(() => {
+                                            location.reload(); // 🔄 recarga automáticamente
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            title: 'Error',
+                                            text: 'No se pudo eliminar el préstamo.',
+                                            icon: 'error',
+                                            confirmButtonText: 'Aceptar'
+                                        });
+                                    }
+                                })
+                                .catch(error => {
+                                    Swal.fire('Error', 'Error en la petición al servidor.', 'error');
+                                });
                         }
                     });
                 });
             });
         });
     </script>
+
 
 
 
