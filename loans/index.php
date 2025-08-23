@@ -16,6 +16,11 @@
 
 <body>
 
+    <a href="../index.php" class=""><svg class="w-10 h-10 bg-red-100 rounded-full border-4 m-4 " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4" />
+        </svg>
+    </a>
+
     <div class="h-screen flex justify-center items-center">
         <div class="flex justify-center items-center space-x-4">
             <div class="flex justify-center items-center p-2 cursor-pointerfont-semibold text-md w-auto rounded-lg bg-blue-200 shadow-lg shadow-blue-500/50">

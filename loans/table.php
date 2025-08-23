@@ -128,7 +128,13 @@ if (isset($_GET['delete'])) {
 
 <body class="bg-gray-100">
 
+    <a href="./index.php" class=""><svg class="w-10 h-10 bg-red-100 rounded-full border-4 m-4 m-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4" />
+        </svg>
+    </a>
+
     <div class="relative overflow-x-auto rounded-2xl shadow-2xl shadow-blue-500/50 m-4 bg-white">
+
         <table class="w-full text-sm text-left text-gray-700">
             <thead class="text-xs uppercase bg-gray-50">
                 <tr>

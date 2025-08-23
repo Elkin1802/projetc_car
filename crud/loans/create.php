@@ -98,9 +98,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <body>
 
+    <a href="../../loans/index.php" class=""><svg class="w-10 h-10 bg-red-100 rounded-full border-4 m-4 " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4" />
+        </svg>
+    </a>
 
     <div class="flex justify-center items-center h-screen">
-        <form method="POST" action="<?= $_SERVER['PHP_SELF'] ?>" class="max-w-sm mx-auto p-6 bg-white rounded-lg shadow-xl shadow-red-500/50">
+        <form method="POST" action="<?= $_SERVER['PHP_SELF'] ?>" class="max-w-sm w-full mx-auto p-6 bg-white rounded-lg shadow-xl shadow-red-500/50">
 
             <!-- Fecha -->
             <div class="relative z-0 w-full mb-5 group">
