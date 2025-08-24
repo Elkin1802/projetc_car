@@ -13,26 +13,24 @@ $conexion = $objeto->conectar();
 
 $swalMessage = ''; // ← Aquí almacenamos el mensaje JS a mostrar
 
-// Create loans
+// Update pass
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (
         isset($_POST['fecha']) &&
         isset($_POST['valor']) &&
-        isset($_POST['responsable']) &&
-        isset($_POST['status']) &&
-        isset($_POST['abono_pago']) &&
-        isset($_POST['motivo'])
+        isset($_POST['deuda']) &&
+        isset($_POST['responsable'])
+
     ) {
         $fecha = $_POST['fecha'];
         $valor = $_POST['valor'];
+        $deuda = $_POST['deuda'];
         $responsable = $_POST['responsable'];
-        $status = $_POST['status'];
-        $abono_pago = $_POST['abono_pago'];
-        $motivo = $_POST['motivo'];
 
-        $stmt = $conexion->prepare("INSERT INTO prestamos (fecha, valor, responsable, status, abono_pago, motivo) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sissis", $fecha, $valor, $responsable, $status, $abono_pago, $motivo);
+
+        $stmt = $conexion->prepare("INSERT INTO abonos (fecha, valor,deuda, responsable) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("siss", $fecha, $valor, $deuda, $responsable);
 
         if ($stmt->execute()) {
             $swalMessage = "
@@ -45,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             confirmButtonText: 'Aceptar'
         }).then(() => {
             setTimeout(function() {
-                window.location.href = '../../loans/table.php';
+                window.location.href = '../../pass/table.php';
             }, 500); // 500ms para asegurar que la alerta se muestre
         });
     });
@@ -98,9 +96,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <body>
 
+    <a href="../../pass/index.php" class=""><svg class="w-10 h-10 bg-red-100 rounded-full border-4 m-4 " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4" />
+        </svg>
+    </a>
 
     <div class="flex justify-center items-center h-screen">
-        <form method="POST" action="<?= $_SERVER['PHP_SELF'] ?>" class="max-w-sm mx-auto p-6 bg-white rounded-lg shadow-xl shadow-red-500/50">
+        <form method="POST" action="<?= $_SERVER['PHP_SELF'] ?>" class="max-w-sm w-full mx-auto p-6 bg-white rounded-lg shadow-xl shadow-red-500/50">
 
             <!-- Fecha -->
             <div class="relative z-0 w-full mb-5 group">
@@ -114,34 +116,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <label for="valor" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Valor</label>
             </div>
 
+            <!-- Deuda -->
+            <div class="relative z-0 w-full mb-5 group">
+                <input type="number" name="deuda" id="deuda" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required />
+                <label for="deuda" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Fecha</label>
+            </div>
+
+
             <!-- Responsable -->
             <div class="relative z-0 w-full mb-5 group">
-                <input type="text" name="responsable" id="responsable" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required />
+                <textarea name="responsable" id="responsable" rows="4" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none resize-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required></textarea>
                 <label for="responsable" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Responsable</label>
-            </div>
-
-            <div class="grid md:grid-cols-2 md:gap-6">
-                <!-- Status -->
-                <div class="relative z-0 w-full mb-5 group">
-                    <select name="status" id="status" class="block appearance-none w-full bg-transparent text-sm text-gray-900 border-0 border-b-2 border-gray-300 px-0 py-2.5 peer focus:outline-none focus:ring-0 focus:border-blue-600" required>
-                        <option value="" disabled selected hidden></option>
-                        <option value="0">Debe</option>
-                        <option value="1">Pagado</option>
-                    </select>
-                    <label for="status" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Estado de pago</label>
-                </div>
-
-                <!-- Abono -->
-                <div class="relative z-0 w-full mb-5 group">
-                    <input type="number" name="abono_pago" id="abono_pago" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required />
-                    <label for="abono_pago" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Abono / Pagado</label>
-                </div>
-            </div>
-
-            <!-- Motivo -->
-            <div class="relative z-0 w-full mb-5 group">
-                <textarea name="motivo" id="motivo" rows="4" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none resize-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required></textarea>
-                <label for="motivo" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Motivo</label>
             </div>
 
             <!-- Botón -->
