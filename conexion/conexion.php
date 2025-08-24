@@ -1,19 +1,17 @@
 <?php
-class Conexion {
+class Conexion
+{
     private $host = "localhost";
-    private $db = "car_project";
-    private $user = "root";
-    private $password = "";
-    private $charset = "utf8mb4";
+    private $user = "root"; // Cambia si tu usuario es otro
+    private $password = ""; // Cambia si tu contraseña es distinta
+    private $database = "car_project";
 
-    public function conectar() {
-        try {
-            $dsn = "mysql:host=$this->host;dbname=$this->db;charset=$this->charset";
-            $pdo = new PDO($dsn, $this->user, $this->password);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $pdo;
-        } catch (PDOException $e) {
-            die("Error de conexión: " . $e->getMessage());
+    public function conectar()
+    {
+        $conn = new mysqli($this->host, $this->user, $this->password, $this->database);
+        if ($conn->connect_error) {
+            die("Conexión fallida: " . $conn->connect_error);
         }
+        return $conn;
     }
 }
