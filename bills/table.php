@@ -13,38 +13,42 @@ $conexion = $objeto->conectar();
 
 $swalMessage = ''; // ← Aquí almacenamos el mensaje JS a mostrar
 
-// Consulta todos los abonos
-$consulta = "SELECT * FROM abonos";
+// Consulta todos los préstamos
+$consulta = "SELECT * FROM gastos";
 $resultado = $conexion->query($consulta);
 
-$pass = [];
+$bills = [];
 if ($resultado && $resultado->num_rows > 0) {
     while ($row = $resultado->fetch_assoc()) {
-        $pass[] = $row;
+        $bills[] = $row;
     }
 }
 
-// Update pass
+// Update bills
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if (
         isset($_POST['fecha']) &&
+        isset($_POST['tipo_gasto']) &&
         isset($_POST['valor']) &&
-        isset($_POST['deuda']) &&
+        isset($_POST['pagado']) &&
+        isset($_POST['valor_restante']) &&
         isset($_POST['responsable']) &&
-        isset($_POST['id_abonos']) // importante
+        isset($_POST['id_gasto']) // importante
     ) {
         $fecha = $_POST['fecha'];
+        $tipo_gasto = $_POST['tipo_gasto'];
         $valor = $_POST['valor'];
-        $deuda = $_POST['deuda'];
+        $pagado = $_POST['pagado'];
+        $valor_restante = $_POST['valor_restante'];
         $responsable = $_POST['responsable'];
-        $id_abonos = $_POST['id_abonos'];
+        $id_gasto = $_POST['id_gasto'];
 
         // Asegúrate de validar/sanitizar aquí si es necesario
 
-        $stmt = $conexion->prepare("UPDATE abonos SET fecha=?, valor=?, deuda=?, responsable=? WHERE id_abonos=?");
-        $stmt->bind_param("sissi", $fecha, $valor, $deuda, $responsable, $id_abonos);
+        $stmt = $conexion->prepare("UPDATE gastos SET fecha=?, tipo_gasto=?, valor=?, pagado=?, valor_restante=?, responsable=? WHERE id_gasto=?");
+        $stmt->bind_param("sssissi", $fecha, $tipo_gasto, $valor, $pagado, $valor_restante, $responsable, $id_gasto);
 
         if ($stmt->execute()) {
             $swalMessage = "
@@ -54,13 +58,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 title: 'Éxito',
                 text: 'Datos actualizados correctamente',
                 icon: 'success',
-                timer: 3000, // la alerta se cierra sola en 3s
-                showConfirmButton: true
             }).then(() => {
-                // Espera 2 segundos más antes de redirigir
+                // Espera 5 segundos más antes de redirigir
                 setTimeout(() => {
                     window.location.href = 'table.php';
-                }, 5000); 
+                }, 2000); 
             });
         });
     </script>";
@@ -96,13 +98,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-
-// Delete pass
+// Delete bills
 
 if (isset($_GET['delete'])) {
     $idToDelete = intval($_GET['delete']);
 
-    $stmt = $conexion->prepare("DELETE FROM abonos WHERE id_abonos = ?");
+    $stmt = $conexion->prepare("DELETE FROM gastos WHERE id_gasto = ?");
     $stmt->bind_param("i", $idToDelete);
 
     if ($stmt->execute()) {
@@ -114,8 +115,6 @@ if (isset($_GET['delete'])) {
     $stmt->close();
     exit();
 }
-
-
 
 ?>
 <!DOCTYPE html>
@@ -138,7 +137,7 @@ if (isset($_GET['delete'])) {
 
 <body class="bg-gray-100">
 
-    <a href="./index.php" class=""><svg class="w-10 h-10 bg-red-100 rounded-full border-4 m-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+    <a href="./index.php" class=""><svg class="w-10 h-10 bg-red-100 rounded-full border-4 m-4 m-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4" />
         </svg>
     </a>
@@ -149,31 +148,40 @@ if (isset($_GET['delete'])) {
             <thead class="text-xs uppercase bg-gray-50">
                 <tr>
                     <th class="px-6 py-3">Fecha</th>
+                    <th class="px-6 py-3">Tipo de gasto</th>
                     <th class="px-6 py-3">Valor</th>
-                    <th class="px-6 py-3">Deuda</th>
-                    <th class="px-6 py-3">Abono A</th>
+                    <th class="px-6 py-3">Estado de pago</th>
+                    <th class="px-6 py-3">Valor restante</th>
+                    <th class="px-6 py-3">Responsable</th>
                     <th class="px-6 py-3">Acción</th>
                 </tr>
             </thead>
             <tbody>
-                <?php if (!empty($pass)): ?>
-                    <?php foreach ($pass as $loan): ?>
+                <?php if (!empty($bills)): ?>
+                    <?php foreach ($bills as $loan): ?>
                         <tr class="bg-white border-b hover:bg-gray-50">
 
                             <td class="px-6 py-4 font-semibold"><?php echo htmlspecialchars($loan['fecha']); ?></td>
+                            <td class="px-6 py-4"><?php echo htmlspecialchars($loan['tipo_gasto']); ?></td>
                             <td class="px-6 py-4"><?php echo number_format($loan['valor'], 0, ',', '.'); ?></td>
-                            <td class="px-6 py-4"><?php echo number_format($loan['deuda'], 0, ',', '.'); ?></td>
+                            <td class="px-6 py-4 flex items-center">
+                                <div class="h-2.5 w-2.5 rounded-full <?php echo $loan['pagado'] == 0 ? 'bg-green-500' : 'bg-red-500'; ?> mr-2"></div>
+                                <?php echo $loan['pagado'] == 0 ? 'Pagado' : 'No pagado'; ?>
+                            </td>
+                            <td class="px-6 py-4"><?php echo number_format($loan['valor_restante'], 0, ',', '.') ?></td>
                             <td class="px-6 py-4"><?php echo htmlspecialchars($loan['responsable']); ?></td>
                             <td class="px-6 py-4 flex space-x-0.5">
                                 <a href="#" class="flex justify-start items-start"
                                     data-modal-target="editUserModal"
                                     data-modal-show="editUserModal"
                                     class="text-blue-600 hover:underline"
-                                    data-id="<?php echo $loan['id_abonos']; ?>"
+                                    data-id="<?php echo $loan['id_gasto']; ?>"
                                     data-fecha="<?php echo isset($loan['fecha']) ? $loan['fecha'] : ''; ?>"
+                                    data-tipo_gasto="<?php echo isset($loan['tipo_gasto']) ? $loan['tipo_gasto'] : ''; ?>"
                                     data-valor="<?php echo isset($loan['valor']) ? $loan['valor'] : ''; ?>"
-                                    data-deuda="<?php echo isset($loan['deuda']) ? $loan['deuda'] : ''; ?>"
-                                    data-responsable="<?php echo isset($loan['responsable']) ? $loan['responsable'] : ''; ?>">
+                                    data-pagado="<?php echo isset($loan['pagado']) ? $loan['pagado'] : ''; ?>"
+                                    data-valor_restante="<?php echo isset($loan['valor_restante']) ? $loan['valor_restante'] : ''; ?>"
+                                    data-responsable="<?php echo isset($loan['responsable']) ? htmlspecialchars($loan['responsable'], ENT_QUOTES, 'UTF-8') : ''; ?>">
                                     <svg class="w-6 h-6 text-green-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                         <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round" stroke-width="2" d="M7 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h1m4-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm7.441 1.559a1.907 1.907 0 0 1 0 2.698l-6.069 6.069L10 19l.674-3.372 6.07-6.07a1.907 1.907 0 0 1 2.697 0Z" />
                                     </svg>
@@ -181,7 +189,7 @@ if (isset($_GET['delete'])) {
                                 </a>
                                 <a href="#"
                                     class="text-red-600 hover:underline ml-2 btn-delete"
-                                    data-id="<?php echo $loan['id_abonos']; ?>">
+                                    data-id="<?php echo $loan['id_gasto']; ?>">
                                     <svg class="w-6 h-6 text-red-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z" />
                                     </svg>
@@ -202,9 +210,9 @@ if (isset($_GET['delete'])) {
 
     <!-- Modal Visual (sin funcionalidad PHP) -->
     <div id="editUserModal" tabindex="-1" aria-hidden="true" class="fixed inset-0 z-50 hidden items-center justify-center p-4 overflow-auto">
-        <div class="relative max-h-full w-96">
+        <div class="relative max-h-full">
             <form method="POST" action="<?= $_SERVER['PHP_SELF'] ?>" class="w-full p-6 bg-white rounded-lg shadow-xl shadow-red-500/50">
-                <input type="hidden" name="id_abonos" id="id_abonos">
+                <input type="hidden" name="id_gasto" id="id_gasto">
 
                 <!-- Fecha -->
                 <div class="relative z-0 w-full mb-5 group">
@@ -212,22 +220,48 @@ if (isset($_GET['delete'])) {
                     <label for="fecha" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Fecha</label>
                 </div>
 
-                <!-- Valor -->
-                <div class="relative z-0 w-full mb-5 group">
-                    <input type="number" name="valor" id="valor" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required />
-                    <label for="valor" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Valor</label>
+                <div class="grid md:grid-cols-2 md:gap-6">
+                    <!-- Tipo gasto -->
+                    <div class="relative z-0 w-full mb-5 group">
+                        <select name="tipo_gasto" id="tipo_gasto" class="block appearance-none w-full bg-transparent text-sm text-gray-900 border-0 border-b-2 border-gray-300 px-0 py-2.5 peer focus:outline-none focus:ring-0 focus:border-blue-600" required>
+                            <option value="" disabled selected hidden></option>
+                            <option value="Administracion">Administración</option>
+                            <option value="Seguridad conductor">Seguridad conductor</option>
+                            <option value="Prestamo">Prestamo</option>
+                            <option value="Arreglo carro">Arreglo carro</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                        <label for="tipo_gasto" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Tipo de pago</label>
+                    </div>
+
+                    <!-- Valor -->
+                    <div class="relative z-0 w-full mb-5 group">
+                        <input type="number" name="valor" id="valor" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required />
+                        <label for="valor" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Valor</label>
+                    </div>
                 </div>
 
-                <!-- Deuda -->
-                <div class="relative z-0 w-full mb-5 group">
-                    <input type="text" name="deuda" id="deuda" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required />
-                    <label for="deuda" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Deuda</label>
-                </div>
+                <div class="grid md:grid-cols-2 md:gap-6">
+                    <!-- Pagado-->
+                    <div class="relative z-0 w-full mb-5 group">
+                        <select name="pagado" id="pagado" class="block appearance-none w-full bg-transparent text-sm text-gray-900 border-0 border-b-2 border-gray-300 px-0 py-2.5 peer focus:outline-none focus:ring-0 focus:border-blue-600" required>
+                            <option value="" disabled selected hidden></option>
+                            <option value="0">Pagado</option>
+                            <option value="1">No pagado</option>
+                        </select>
+                        <label for="pagado" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Pago</label>
+                    </div>
 
+                    <!-- Valor restante -->
+                    <div class="relative z-0 w-full mb-5 group">
+                        <input type="number" name="valor_restante" id="valor_restante" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required />
+                        <label for="valor_restante" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Valor restante</label>
+                    </div>
+                </div>
 
                 <!-- Responsable -->
                 <div class="relative z-0 w-full mb-5 group">
-                    <textarea name="responsable" id="responsable" rows="4" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none resize-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required></textarea>
+                    <input type="text" name="responsable" id="responsable" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer" required />
                     <label for="responsable" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Responsable</label>
                 </div>
 
@@ -248,32 +282,29 @@ if (isset($_GET['delete'])) {
 
     <script src="../js/pagination.js"></script>
 
-    <!-- Delete alert and button -->
+    <!-- Delete -->
+
     <script src="../js/delete.js"></script>
 
     <!-- Modal Edit -->
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Escuchamos clics en los botones "Editar"
             const editButtons = document.querySelectorAll('[data-modal-target="editUserModal"]');
 
             editButtons.forEach(button => {
                 button.addEventListener('click', () => {
-                    // Obtener valores
-                    const id = button.getAttribute('data-id');
-                    const fecha = button.getAttribute('data-fecha');
-                    const valor = button.getAttribute('data-valor');
-                    const deuda = button.getAttribute('data-deuda');
-                    const responsable = button.getAttribute('data-responsable');
-
-                    // Rellenar inputs
-                    document.getElementById('id_abonos').value = id; // 👈 ahora sí el ID va al hidden
-                    document.getElementById('fecha').value = fecha;
-                    document.getElementById('valor').value = valor;
-                    document.getElementById('deuda').value = deuda;
-                    document.getElementById('responsable').value = responsable;
+                    document.getElementById('id_gasto').value = button.getAttribute('data-id'); // 👈 AGREGA ESTO
+                    document.getElementById('fecha').value = button.getAttribute('data-fecha');
+                    document.getElementById('tipo_gasto').value = button.getAttribute('data-tipo_gasto');
+                    document.getElementById('valor').value = button.getAttribute('data-valor');
+                    document.getElementById('pagado').value = button.getAttribute('data-pagado');
+                    document.getElementById('valor_restante').value = button.getAttribute('data-valor_restante');
+                    document.getElementById('responsable').value = button.getAttribute('data-responsable');
                 });
             });
+
         });
     </script>
 
