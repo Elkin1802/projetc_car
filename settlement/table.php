@@ -17,14 +17,14 @@ $swalMessage = ''; // ← Aquí almacenamos el mensaje JS a mostrar
 $consulta = "SELECT * FROM liquidacion";
 $resultado = $conexion->query($consulta);
 
-$roster = [];
+$settlement = [];
 if ($resultado && $resultado->num_rows > 0) {
     while ($row = $resultado->fetch_assoc()) {
-        $roster[] = $row;
+        $settlement[] = $row;
     }
 }
 
-// Update roster
+// Update settlement
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
@@ -96,7 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 
 
-// Delete roster
+// Delete settlement
 
 if (isset($_GET['delete'])) {
     $idToDelete = intval($_GET['delete']);
@@ -150,13 +150,13 @@ if (isset($_GET['delete'])) {
                     <th class="px-6 py-3">Fecha</th>
                     <th class="px-6 py-3">Valor</th>
                     <th class="px-6 py-3">Despacho</th>
-                    <th class="px-6 py-3">Motivo pago adicional</th>
+                    <th class="px-6 py-3">Motivo</th>
                     <th class="px-6 py-3">Acción</th>
                 </tr>
             </thead>
             <tbody>
-                <?php if (!empty($roster)): ?>
-                    <?php foreach ($roster as $loan): ?>
+                <?php if (!empty($settlement)): ?>
+                    <?php foreach ($settlement as $loan): ?>
                         <tr class="bg-white border-b hover:bg-gray-50">
 
                             <td class="px-6 py-4 font-semibold"><?php echo htmlspecialchars($loan['fecha']); ?></td>
@@ -220,20 +220,27 @@ if (isset($_GET['delete'])) {
                     <label for="valor" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Valor</label>
                 </div>
 
-                <!-- Despacho -->
-                <div class="relative z-0 w-full mb-5 group">
-                    <select name="despacho" id="despacho" class="block appearance-none w-full bg-transparent text-sm text-gray-900 border-0 border-b-2 border-gray-300 px-0 py-2.5 peer focus:outline-none focus:ring-0 focus:border-blue-600" required>
-                        <option value="" disabled selected hidden></option>
-                        <option value="0">Debe</option>
-                        <option value="1">Pagado</option>
-                    </select>
-                    <label for="despacho" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Despacho</label>
-                </div>
+                <div class="grid md:grid-cols-2 md:gap-6">
+                    <!-- Despacho -->
+                    <div class="relative z-0 w-full mb-5 group">
+                        <select name="despacho" id="despacho" class="block appearance-none w-full bg-transparent text-sm text-gray-900 border-0 border-b-2 border-gray-300 px-0 py-2.5 peer focus:outline-none focus:ring-0 focus:border-blue-600" required>
+                            <option value="" disabled selected hidden></option>
+                            <option value="0">No Pagado</option>
+                            <option value="1">Pagado</option>
+                        </select>
+                        <label for="despacho" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Despacho</label>
+                    </div>
 
-                <!-- Motivo -->
-                <div class="relative z-0 w-full mb-5 group">
-                    <textarea name="motivo" id="motivo" rows="4" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none resize-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"></textarea>
-                    <label for="motivo" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Motivo valor adicional</label>
+                    <!-- Motivo -->
+                    <div class="relative z-0 w-full mb-5 group">
+                        <select name="motivo" id="motivo" class="block appearance-none w-full bg-transparent text-sm text-gray-900 border-0 border-b-2 border-gray-300 px-0 py-2.5 peer focus:outline-none focus:ring-0 focus:border-blue-600" required>
+                            <option value="" disabled selected hidden></option>
+                            <option value="0">Liquidacion</option>
+                            <option value="1">Otro</option>
+                        </select>
+                        <label for="motivo" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Motivo</label>
+                    </div>
+
                 </div>
 
                 <!-- Botón -->

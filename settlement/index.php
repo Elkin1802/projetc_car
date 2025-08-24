@@ -24,7 +24,7 @@
     <div class="h-screen flex justify-center items-center">
         <div class="flex justify-center items-center space-x-4">
             <div class="flex justify-center items-center p-2 cursor-pointerfont-semibold text-md w-auto rounded-lg bg-blue-200 shadow-lg shadow-blue-500/50">
-                <a class="flex justify-center items-center" href="../crud/roster/create.php">
+                <a class="flex justify-center items-center" href="../crud/settlement/create.php">
                     <img class="w-28 h-28" src="https://cdn-icons-png.flaticon.com/512/2237/2237827.png" alt="loans">
 
                     <p class="text-md text-blue-700 font-bold ">Agregar datos</p>

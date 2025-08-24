@@ -43,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             confirmButtonText: 'Aceptar'
         }).then(() => {
             setTimeout(function() {
-                window.location.href = '../../roster/table.php';
+                window.location.href = '../../settlement/table.php';
             }, 500); // 500ms para asegurar que la alerta se muestre
         });
     });
@@ -109,7 +109,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <body>
 
-    <a href="../../roster/index.php" class=""><svg class="w-10 h-10 bg-red-100 rounded-full border-4 m-4 " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+    <a href="../../settlement/index.php" class=""><svg class="w-10 h-10 bg-red-100 rounded-full border-4 m-4 " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4" />
         </svg>
     </a>
@@ -129,23 +129,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <label for="valor" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Valor</label>
             </div>
 
-            <!-- Despacho -->
-            <div class="relative z-0 w-full mb-5 group">
-                <select name="despacho" id="despacho" class="block appearance-none w-full bg-transparent text-sm text-gray-900 border-0 border-b-2 border-gray-300 px-0 py-2.5 peer focus:outline-none focus:ring-0 focus:border-blue-600" required>
-                    <option value="" disabled selected hidden></option>
-                    <option value="0">No Pagado</option>
-                    <option value="1">Pagado</option>
-                </select>
-                <label for="despacho" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Despacho</label>
+            <div class="grid md:grid-cols-2 md:gap-6">
+                <!-- Despacho -->
+                <div class="relative z-0 w-full mb-5 group">
+                    <select name="despacho" id="despacho" class="block appearance-none w-full bg-transparent text-sm text-gray-900 border-0 border-b-2 border-gray-300 px-0 py-2.5 peer focus:outline-none focus:ring-0 focus:border-blue-600" required>
+                        <option value="" disabled selected hidden></option>
+                        <option value="0">No Pagado</option>
+                        <option value="1">Pagado</option>
+                    </select>
+                    <label for="despacho" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Despacho</label>
+                </div>
+
+                <!-- Motivo -->
+                <div class="relative z-0 w-full mb-5 group">
+                    <select name="motivo" id="motivo" class="block appearance-none w-full bg-transparent text-sm text-gray-900 border-0 border-b-2 border-gray-300 px-0 py-2.5 peer focus:outline-none focus:ring-0 focus:border-blue-600" required>
+                        <option value="" disabled selected hidden></option>
+                        <option value="0">Liquidacion</option>
+                        <option value="1">Otro</option>
+                    </select>
+                    <label for="motivo" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Motivo</label>
+                </div>
+
             </div>
-
-
-            <!-- Motivo -->
-            <div class="relative z-0 w-full mb-5 group">
-                <textarea name="motivo" id="motivo" rows="4" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none resize-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"></textarea>
-                <label for="motivo" class="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 peer-focus:text-blue-600">Motivo Pago Adicional</label>
-            </div>
-
             <!-- Botón -->
             <button type="submit" class="cursor-pointer w-full bg-blue-700 hover:bg-blue-800 text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center">Registrar Datos</button>
         </form>
