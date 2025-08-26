@@ -1,0 +1,10 @@
+# Habilitar motor de reescritura
+RewriteEngine On
+
+# Redirigir cualquier intento de acceder a la carpeta "total" a 404
+RewriteRule ^total(/.*)?$ /project_car/404.php [L]
+
+# Redirigir archivos o carpetas inexistentes a 404
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /project_car/404.php [L]

@@ -34,6 +34,7 @@
                     </button>
                     <a href="" class="flex mr-4">
                         <img src="./img/icons/car_red.svg" class="mr-3 h-8" alt="FlowBite Logo" />
+
                         <h1 class="animated-text !self-center">Red Car</h1>
 
 
