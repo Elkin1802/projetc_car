@@ -67,6 +67,12 @@ $totalAbonos = getTotal($conexion, 'abonos');
             <h2 class="text-lg font-semibold">Abonos</h2>
             <p class="text-2xl mt-2"><?php echo number_format($totalAbonos, 0, ',', '.'); ?></p>
         </div>
+
+        <!-- Total -->
+        <div class="bg-gray-500 text-white rounded-lg p-6 shadow-lg">
+            <h2 class="text-lg font-semibold">Total</h2>
+            <p class="text-2xl mt-2"><?php echo number_format($totalNomina - $totalLiquidacion - $totalPrestamos - $totalGastos - $totalAbonos, 0, ',', '.'); ?></p>
+        </div>
     </div>
 
 

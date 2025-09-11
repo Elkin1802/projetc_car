@@ -1,63 +1,66 @@
+document.addEventListener("DOMContentLoaded", function() {
+  function porcentaje(valor) {
+    return parseFloat(((valor / window.totalGeneral) * 100).toFixed(2));
+  }
 
-    const getChartOptions = () => {
-      return {
-        series: [52.8, 26.8, 20.4],
-        colors: ["#1C64F2", "#16BDCA", "#9061F9", "#98B9AB", "#3F3047"],
-        chart: {
-          height: 420,
-          width: "100%",
-          type: "pie",
-        },
-        stroke: {
-          colors: ["white"],
-          lineCap: "",
-        },
-        plotOptions: {
-          pie: {
-            labels: {
-              show: true,
-            },
-            size: "100%",
-            dataLabels: {
-              offset: -25
-            }
-          },
-        },
-        labels: ["Prestamos", "Abonos", "Gastos","Nomina","Liquidación"],
-        dataLabels: {
-          enabled: true,
-          style: {
-            fontFamily: "Inter, sans-serif",
-          },
-        },
-        legend: {
-          position: "bottom",
-          fontFamily: "Inter, sans-serif",
-        },
-        yaxis: {
-          labels: {
-            formatter: function(value) {
-              return value + "%"
-            },
-          },
-        },
-        xaxis: {
-          labels: {
-            formatter: function(value) {
-              return value + "%"
-            },
-          },
-          axisTicks: {
-            show: false,
-          },
-          axisBorder: {
-            show: false,
-          },
-        },
+  const seriesData = [
+    porcentaje(window.chartData.nomina),
+    porcentaje(window.chartData.liquidacion),
+    porcentaje(window.chartData.prestamos),
+    porcentaje(window.chartData.gastos),
+    porcentaje(window.chartData.abonos)
+  ];
+
+  const labels = ["Nómina", "Liquidación", "Préstamos", "Gastos", "Abonos"];
+
+  const options = {
+    series: seriesData,
+    chart: {
+      type: 'pie',
+      height: 420
+    },
+    labels: labels,
+    colors: ["#1C64F2", "#16BDCA", "#9061F9", "#98B9AB", "#3F3047"],
+
+    // Mostrar solo el porcentaje en cada porción
+    dataLabels: {
+      enabled: true,
+      formatter: function(val) {
+        return val + '%';
+      },
+      style: {
+        fontSize: '14px',
+        fontWeight: 'bold'
+      },
+      dropShadow: { enabled: false }
+    },
+
+    // Tooltip muestra nombre + valor real en pesos
+    tooltip: {
+      enabled: true,
+      y: {
+        formatter: function(val, { seriesIndex }) {
+          const valorReal = [
+            window.chartData.nomina,
+            window.chartData.liquidacion,
+            window.chartData.prestamos,
+            window.chartData.gastos,
+            window.chartData.abonos
+          ][seriesIndex];
+          return `${new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0
+          }).format(valorReal)}`;
+        }
       }
-    }
+    },
 
-    if (document.getElementById("pie-chart") && typeof ApexCharts !== 'undefined') {
-      const chart = new ApexCharts(document.getElementById("pie-chart"), getChartOptions());
-      chart.render();
+    legend: {
+      position: 'bottom'
     }
+  };
+
+  const chart = new ApexCharts(document.querySelector("#pie-chart"), options);
+  chart.render();
+});
